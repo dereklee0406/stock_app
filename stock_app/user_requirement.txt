@@ -1,0 +1,160 @@
+# Stock Analysis Tool – User & Function Requirements (Optimized)
+
+## Overview
+A robust, modular, object-oriented Python tool for stock analysis using the Alpha Vantage API. Retrieves and caches financial data, performs technical analysis, generates trading signals, backtests strategies, and provides actionable investment recommendations. Designed for performance, security, reliability, extensibility, and user-friendliness.
+
+## Project Structure
+- Modular: Each main function is a separate, importable module/package (data_acquisition, technical_analysis, signal_generation, strategy, recommendation, cli, config, logs).
+- Object-oriented: Core logic in classes with clear responsibilities.
+- Configurable: All sensitive/configurable values (API keys, directories, thresholds) set via `.env` and loaded at runtime.
+- Logging: Multi-level logging (INFO, WARNING, ERROR, DEBUG) to file and console, with timestamps and module names.
+- Error handling: All modules handle and log errors gracefully, with user-friendly messages and fallback logic.
+- Documentation: All modules/classes/functions have docstrings. Project root contains a README.md with setup and usage instructions.
+
+## Functional Requirements (Implemented)
+
+### Data Acquisition
+- Retrieves historical stock data from Alpha Vantage (free API; always fetches full history for each symbol).
+- Stock symbols, API settings, and data acquisition parameters are set via `.env`.
+- Only the daily interval is fully supported (intraday is scaffolded but not implemented).
+- Accepts a list of stock symbols from a watchlist file (default: `watchlist.txt`); all symbols are processed in parallel using multi-threading.
+- Caches API responses as `{stock}_data_{interval}.csv` in `stock_data/` (cache is valid for 1 day for daily data).
+- User can force refresh or use cache via CLI (`--force-refresh` and `--use-cache`).
+- Handles API rate limits and retries, with user notification and fallback logic.
+- Adjusts for splits and dividends using Alpha Vantage's adjusted close and adjustment factors.
+- Validates incoming data for completeness and plausibility; logs and handles missing/anomalous data.
+- Saves all raw data as CSV with ISO date index and standard OHLCV columns in `stock_data/`.
+- Logs all data acquisition steps, errors, and cache usage for traceability.
+
+### Technical Analysis
+- Processes raw stock data from `stock_data/`.
+- Technical analysis parameters (e.g., MA windows, RSI periods) are set via `.env` and loaded at runtime.
+- Calculates and appends indicators using the `ta` library (not pandas_ta):
+  - SMA, EMA (configurable windows)
+  - RSI, MACD, Bollinger Bands, Stochastic Oscillator (K, D, J), ADX, OBV, VWAP (intraday only), Ichimoku (A, B), Rolling std, Fibonacci levels, ATR, MFI
+- Defensive checks: Only calculates indicators if required columns exist and are not all NaN; logs and skips on insufficient data.
+- Saves indicators as `{stock}_indicators.csv` in `stock_indicators/`.
+- Generates comprehensive, modern charts (multi-panel: price overlay with all key indicators, RSI, MACD, Stoch, volume) as PNG and SVG in `stock_indicators/`.
+- Charting features include:
+  - All EMAs, SMA, Bollinger Bands, ATR, MFI, and Ichimoku Cloud (A, B) overlays on the price chart
+  - Support/resistance lines and annotations
+  - Volume subplot with up/down color bars
+  - Stochastic and MFI on secondary axes with threshold shading
+  - Summary box for latest Stoch/MFI values
+  - Masked/faded missing indicator regions for clarity
+  - White background, strong color contrast, and modern grid/axis styling
+  - Legends only shown when labeled artists exist
+  - Date range in chart title
+- Charting code is modular, with private helper methods for axis/legend styling and summary box
+- All chart and calculation steps are logged, with errors and warnings clearly reported
+- All outputs are saved with clear filenames for user access and traceability.
+
+### Signal Generation
+- Analyzes indicator data from `stock_indicators/`.
+- Signal generation rules, indicator weights, and thresholds are fully configurable via `.env` and loaded at runtime.
+- Generates buy/sell/hold signals using a vectorized, extensible logic mapping over all major indicators (SMA, EMA, MACD, RSI, BB, Stoch, ADX, OBV, VWAP, Ichimoku, volatility, Fibonacci).
+- Each signal includes a structured JSON 'reason' column summarizing which indicators contributed most to the decision (top buy/sell/hold reasons, MTF proxy, etc.).
+- Confidence score (0–100%) is calculated using a weighted, multi-factor formula (indicator weights, volume, confluence, historical accuracy, volatility adjustment, etc.).
+- Always provides a reason for 'hold' signals (e.g., no strong consensus, weights nearly equal).
+- Maintains signal history in `{stock}_signal_history.csv` in `stock_signal/`.
+- Generates comprehensive price charts with:
+  - Buy/sell markers and confidence annotations
+  - Optional overlays for EMA20, EMA50, and Bollinger Bands (configurable)
+  - Optional background shading for buy/sell/hold regions (configurable)
+  - Modern, uncluttered x-axis (auto-limited ticks for many signals)
+  - Stats box for buy/sell counts and average confidence
+  - Legends only shown when labeled artists exist
+- All chart and signal generation steps are logged, with robust error handling and user-friendly messages.
+- Alerts/logs for high-confidence signals and saves all outputs with clear filenames for traceability.
+- Plotting code is modular, with helpers for overlays, background shading, and marker annotation, and is ready for further extension.
+
+### Strategy & Backtesting
+- Uses indicator and signal data from `stock_indicators/` and `stock_signal/`.
+- Implements multiple strategy types (hybrid rule-based, trend-following, mean-reversion, momentum, breakout), with runtime selection and extensibility planned.
+- Backtesting framework supports:
+  - Regime detection (trend, volatility, multi-indicator confluence)
+  - Volatility and trend filters (ATR, SMA, ADX, Bollinger Bands, etc.)
+  - Multi-indicator weighted voting for entry/exit (all weights/thresholds from `.env`)
+  - Stricter entry/exit logic: dynamic stop-loss/take-profit, minimum holding period, cooldown after loss, and robust short trade logic
+  - Confidence scoring and structured JSON 'reason' for each trade (reasons are always exported as objects, not strings)
+  - Dynamic stop-loss/take-profit based on ATR or config
+  - Slippage, fees, and risk-free rate are configurable and factored into results
+  - Trade log output is optimized: logical column order, rounding, ISO date formatting, prettified reasons, CSV and pretty-printed JSON output (with open_reason and close_reason always as objects)
+  - All trades, equity changes, and key events are logged for traceability
+  - Equity curve and drawdown are plotted with actionable overlays (buy/sell/short/cover markers, regime/volatility shading)
+  - All outputs (metrics, trade log, equity curve) are saved as CSV/PNG/JSON in `backtesting_results/`
+- CLI supports batch backtesting for all symbols in the watchlist, processed in parallel (multi-threaded)
+- Defensive checks and robust error handling throughout
+- All key parameters (indicator windows, weights, thresholds, risk, slippage, etc.) are user-configurable via `.env`
+- Documentation and code are kept in sync with actual logic and features
+- Further modularization for advanced strategies (ML, time series, ensemble, portfolio-level) is planned
+
+### Investment Recommendations
+- Integrates signal confidence, consensus, and strategy suitability with historical performance and position management guidelines.
+- Consumes signal and indicator data, as well as trade logs from backtesting, to generate actionable recommendations for each symbol and date.
+- Each recommendation includes: signal type, confidence, risk (volatility-adjusted), expected return (from backtest PnL or default), position size (risk-adjusted), trend, volatility, price, recommended price, best buy/sell price, and a detailed rationale (including indicator context and a structured JSON 'reason' field).
+- The 'reason' field is always exported as a JSON string in both CSV and JSON outputs, ensuring compatibility and downstream processing.
+- Recommendations are filtered by start date (from `.env`) and only include actionable signals (buy/sell/hold with rationale).
+- Outputs are saved as `{stock}_recommendations.csv` and `{stock}_recommendations.json` in `stock_recommendations/`, with pretty-printed JSON and ISO-formatted dates for compatibility.
+- Handles missing data, empty signals, and serialization errors robustly, logging all issues for traceability.
+- All key parameters (confidence, risk, thresholds, etc.) are user-configurable via `.env`.
+- Designed for extensibility: supports user profiles, advanced position sizing, and future integration of portfolio-level and multi-strategy recommendations.
+- All logic and documentation are kept in sync with the codebase for transparency and maintainability.
+- Batch and multithreaded processing ready; outputs are robust for downstream analytics and professional reporting.
+- Enhanced logging and error handling ensure traceability and reliability in production environments.
+
+### forcast
+- Uses indicator, signal, backtest data and recommendations from `stock_indicators/`, `stock_signal/`, `stock_recommendations/` and `backtesting_results/`.
+- (Planned) Implements time series forecasting for stock prices and indicators using statistical and machine learning models (e.g., ARIMA, Prophet, LSTM, XGBoost, ensemble methods).
+- Forecasting parameters (window, horizon, model type, features) will be user-configurable via `.env`.
+- Designed to support both univariate (price only) and multivariate (price + indicators + macro) forecasting.
+- Outputs will include forecasted price ranges, confidence intervals, and scenario analysis for each symbol and date.
+- Forecast results will be saved as CSV/JSON in a dedicated output directory (e.g., `stock_forecast/`), with clear file naming and ISO date formatting.
+- Visualizations will include forecast curves, confidence bands, and overlays on historical charts.
+- All forecast steps, errors, and model diagnostics will be logged for traceability.
+- Defensive checks for missing/insufficient data and model convergence issues.
+- Designed for extensibility: future support for ensemble, regime-switching, and portfolio-level forecasting.
+- Documentation and code will be kept in sync with actual logic and features as forecasting is implemented.
+
+### User Interface
+- Command-line interface (CLI) with clear prompts, input validation, and informative output.
+- Processes a list of symbols from a watchlist file (default: `watchlist.txt`), supporting batch and multithreaded processing for maximum performance.
+- All symbols in the watchlist are processed in parallel using multi-threading.
+- Displays summary results, top recommendations, and key metrics in the console.
+- Prints file paths of all saved outputs (data, indicators, signals, strategy, recommendations, plots) for user access and traceability.
+- All key outputs (raw data, indicators, signals, strategy, recommendations, plots) are saved as CSV/PNG/JSON in their respective output directories.
+- All plots are saved as PNG (and SVG where applicable) in output directories; no `plt.show()` in non-interactive environments to ensure batch compatibility.
+- Robust logging to both console and file, with clear error and status messages for all user actions.
+- Defensive checks and user-friendly error messages for invalid input, missing files, or configuration issues.
+- Designed for professional and production use: outputs are robust, well-structured, and ready for downstream analytics or reporting.
+
+## Not Yet Implemented / Partial
+- Advanced quantitative strategies (machine learning, deep learning, time series models, neural networks, ensemble models) for signal generation and strategy selection.
+- Full support/resistance (S/R) scoring and multi-strategy regime switching:
+  - Current: Only basic S/R logic (recent swing highs/lows, simple price clustering for S/R zones).
+  - Planned: Advanced S/R scoring using multi-timeframe analysis, clustering, volume profile, and statistical validation (e.g., fractal pivots, order block detection, confirmation by volume/volatility).
+  - Multi-strategy regime switching is not yet implemented; current strategies are selected at runtime but do not adaptively switch based on market regime.
+  - Planned: Dynamic regime detection (trend, volatility, mean-reversion, breakout, etc.) to enable automatic switching between multiple strategies (trend-following, mean-reversion, breakout, momentum, etc.) based on real-time indicator and price action analysis.
+  - Future: User-configurable regime definitions, S/R scoring thresholds, and strategy selection logic via `.env`.
+  - All enhancements will be modular and extensible for integration with portfolio-level and ML-driven logic.
+- Advanced pattern recognition (ML-based, fractals, statistical validation, candlestick patterns, etc.).
+- Portfolio-level backtesting, risk management, and multi-asset recommendations.
+- Web UI and Jupyter Notebook support (currently CLI only).
+- Real-time data streaming and live trading integration.
+- Automated report generation (PDF, HTML dashboards).
+- Further internationalization and localization support.
+
+## Function Requirements (as implemented)
+- All modules are importable, follow OOP best practices, and are organized for maintainability and extensibility.
+- All configuration is via `.env` and loaded at runtime; all sensitive/configurable values are never hardcoded.
+- Logging and error handling are robust and consistent across all modules, with multi-level logging to both file and console.
+- Data acquisition, technical analysis, signal generation, strategy/backtesting, and recommendation are fully automated and can be run from the CLI.
+- All outputs (data, indicators, signals, charts, recommendations, backtest results) are saved to their respective folders: `stock_data/`, `stock_indicators/`, `stock_signal/`, `stock_recommendations/`, `backtesting_results/`.
+- All major functions and classes have docstrings and are modular for extensibility and professional development.
+- The system is user-friendly, with a clear CLI, robust logging, and a well-structured output file system.
+- All indicator and strategy parameters are user-configurable via `.env` for maximum flexibility.
+- Defensive checks and error handling are present at every step, with user-friendly error messages and fallback logic.
+- Charts are clear, modern, and actionable, with overlays for signals and indicators, and are saved in both PNG and SVG formats where applicable.
+- All outputs are robust to edge cases and serialization issues; structured fields (e.g., 'reason') are always exported as JSON objects or strings as appropriate for downstream analytics.
+- Batch and multithreaded processing is supported for all major workflows (data acquisition, signal generation, backtesting, recommendations).
+- The codebase is ready for further extension (ML, portfolio-level analytics, web UI, real-time trading, etc.), with documentation kept in sync with actual logic and features.

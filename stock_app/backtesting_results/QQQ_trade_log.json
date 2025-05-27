@@ -1,0 +1,171 @@
+[
+  {
+    "open_date": "2025-01-21 00:00:00",
+    "close_date": "2025-01-23 00:00:00",
+    "holding_period": 2,
+    "open_price": 524.8,
+    "close_price": 532.64,
+    "entry_type": "buy",
+    "exit_type": "take_profit_sell",
+    "pnl": 0.0147,
+    "return": 0.0149,
+    "equity": 101592.8494,
+    "open_reason": {
+      "buy_reasons": [
+        "Close > EMA20",
+        "SMA20 > SMA50",
+        "MACD > Signal",
+        "Close > Ichimoku A/B",
+        "MTF Bullish (proxy)"
+      ],
+      "sell_reasons": [
+        "RSI > 55",
+        "OBV < 0",
+        "High Volatility"
+      ],
+      "hold_reasons": [],
+      "top_buy": [
+        "Close > EMA20",
+        "SMA20 > SMA50",
+        "MACD > Signal"
+      ],
+      "top_sell": [
+        "RSI > 55",
+        "OBV < 0",
+        "High Volatility"
+      ],
+      "mtf_used": true
+    },
+    "close_reason": {
+      "buy_reasons": [
+        "Close > EMA20",
+        "SMA20 > SMA50",
+        "MACD > Signal",
+        "Close > Ichimoku A/B",
+        "MTF Bullish (proxy)"
+      ],
+      "sell_reasons": [
+        "RSI > 55",
+        "Stoch > 80",
+        "OBV < 0",
+        "High Volatility"
+      ],
+      "hold_reasons": [],
+      "top_buy": [
+        "Close > EMA20",
+        "SMA20 > SMA50",
+        "MACD > Signal"
+      ],
+      "top_sell": [
+        "RSI > 55",
+        "Stoch > 80",
+        "OBV < 0"
+      ],
+      "mtf_used": true
+    }
+  },
+  {
+    "open_date": "2025-03-03 00:00:00",
+    "close_date": "2025-03-06 00:00:00",
+    "holding_period": 3,
+    "open_price": 497.05,
+    "close_price": 488.2,
+    "entry_type": "buy",
+    "exit_type": "sell",
+    "pnl": -0.018,
+    "return": -0.0178,
+    "equity": 99974.7052,
+    "open_reason": {
+      "buy_reasons": [
+        "SMA20 > SMA50",
+        "RSI < 45",
+        "Close < BB Lower",
+        "Stoch < 20"
+      ],
+      "sell_reasons": [
+        "Close < EMA20",
+        "MACD < Signal",
+        "OBV < 0",
+        "Close < Ichimoku A/B",
+        "High Volatility"
+      ],
+      "hold_reasons": [],
+      "top_buy": [
+        "SMA20 > SMA50",
+        "RSI < 45",
+        "Close < BB Lower"
+      ],
+      "top_sell": [
+        "Close < EMA20",
+        "MACD < Signal",
+        "OBV < 0"
+      ],
+      "mtf_used": false
+    },
+    "close_reason": {
+      "buy_reasons": [
+        "RSI < 45",
+        "Stoch < 20"
+      ],
+      "sell_reasons": [
+        "Close < EMA20",
+        "SMA20 < SMA50",
+        "MACD < Signal",
+        "OBV < 0",
+        "Close < Ichimoku A/B",
+        "High Volatility"
+      ],
+      "hold_reasons": [],
+      "top_buy": [
+        "RSI < 45",
+        "Stoch < 20"
+      ],
+      "top_sell": [
+        "Close < EMA20",
+        "SMA20 < SMA50",
+        "MACD < Signal"
+      ],
+      "mtf_used": false
+    }
+  },
+  {
+    "open_date": "2025-05-22 00:00:00",
+    "close_date": "2025-05-23 00:00:00",
+    "holding_period": 1,
+    "open_price": 514.0,
+    "close_price": 509.24,
+    "entry_type": "buy",
+    "exit_type": "open_at_end",
+    "pnl": -0.0093,
+    "return": -0.0093,
+    "equity": 100409.5366,
+    "open_reason": {
+      "buy_reasons": [
+        "Close > EMA20",
+        "SMA20 > SMA50",
+        "MACD > Signal",
+        "Close > Ichimoku A/B",
+        "MTF Bullish (proxy)"
+      ],
+      "sell_reasons": [
+        "RSI > 55",
+        "Stoch > 80",
+        "OBV < 0",
+        "High Volatility"
+      ],
+      "hold_reasons": [],
+      "top_buy": [
+        "Close > EMA20",
+        "SMA20 > SMA50",
+        "MACD > Signal"
+      ],
+      "top_sell": [
+        "RSI > 55",
+        "Stoch > 80",
+        "OBV < 0"
+      ],
+      "mtf_used": true
+    },
+    "close_reason": {}
+  }
+]

@@ -1,0 +1,13 @@
+pandas
+numpy
+matplotlib
+requests
+ta
+python-dotenv
+scipy
+python-dotenv
+alpha_vantage
+statsmodels
+mplfinance
+yfinance
+seaborn
